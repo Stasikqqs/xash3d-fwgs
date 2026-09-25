@@ -31,7 +31,11 @@ jobs:
           cp SDL2-src/Xcode/SDL/build/Release-iphoneos/libSDL2.a "$FW/SDL2"
 
       - name: Configure engine
-        run: ./waf configure --ios --enable-bundled-deps --sdl2=SDL2-src/Xcode/SDL/build/Release-iphoneos/SDL2.framework
+        run: |
+          ./waf configure --ios --enable-bundled-deps --sdl2=SDL2-src/Xcode/SDL/build/Release-iphoneos/SDL2.framework || true
+          echo "==== CONFIG LOG (last 150 lines) ===="
+          tail -150 build/config.log
+
 
       - name: Build engine
         run: ./waf build
