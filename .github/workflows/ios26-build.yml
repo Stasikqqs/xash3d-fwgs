@@ -18,14 +18,32 @@ jobs:
       - name: Clone SDL2
         run: git clone --recursive https://github.com/libsdl-org/SDL.git -b SDL2 SDL2-src
 
-      - name: Inspect SDL2 Xcode project
-        run: |
-          cd SDL2-src/Xcode/SDL
-          xcodebuild -list -project SDL.xcodeproj
-
-      - name: Build SDL2.framework
+      - name: Build SDL2 static lib
         run: |
           cd SDL2-src/Xcode/SDL
           xcodebuild -project SDL.xcodeproj -target "Static Library-iOS" -sdk iphoneos -configuration Release build
-          echo "---- BUILD OUTPUT TREE ----"
-          find build -maxdepth 6
+
+      - name: Assemble SDL2.framework
+        run: |
+          FW=SDL2-src/Xcode/SDL/build/Release-iphoneos/SDL2.framework
+          mkdir -p "$FW/Headers"
+          cp SDL2-src/include/*.h "$FW/Headers/"
+          cp SDL2-src/Xcode/SDL/build/Release-iphoneos/libSDL2.a "$FW/SDL2"
+
+      - name: Configure engine
+        run: ./waf configure --ios --enable-bundled-deps --sdl2=SDL2-src/Xcode/SDL/build/Release-iphoneos/SDL2.framework
+
+      - name: Build engine
+        run: ./waf build
+
+      - name: Build HLSDK + package IPA
+        run: |
+          chmod +x scripts/ios/buildhlsdk.sh scripts/ios/createipa.sh
+          ./scripts/ios/buildhlsdk.sh
+          ./scripts/ios/createipa.sh
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: xash3d-ios
+          path: '**/*.ipa'
