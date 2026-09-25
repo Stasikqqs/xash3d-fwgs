@@ -1,0 +1,31 @@
+name: Build Xash3D iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install deps
+        run: brew install python
+
+      - name: Clone SDL2
+        run: git clone --recursive https://github.com/libsdl-org/SDL.git -b SDL2 SDL2-src
+
+      - name: Inspect SDL2 Xcode project
+        run: |
+          cd SDL2-src/Xcode/SDL
+          xcodebuild -list -project SDL.xcodeproj
+
+      - name: Build SDL2.framework
+        run: |
+          cd SDL2-src/Xcode/SDL
+          xcodebuild -project SDL.xcodeproj -target "Static Library-iOS" -sdk iphoneos -configuration Release build
+          echo "---- BUILD OUTPUT TREE ----"
+          find build -maxdepth 6
